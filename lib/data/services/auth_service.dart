@@ -1,5 +1,3 @@
-import 'dart:js_interop';
-
 import 'package:chatx/core/exceptions/dio_exception.dart';
 import 'package:chatx/data/models/user.dart';
 import 'package:dio/dio.dart' as client;
@@ -16,21 +14,6 @@ class AuthService {
     dio.options.connectTimeout = const Duration(seconds: 10);
     dio.options.responseType = client.ResponseType.json;
     dio.options.contentType = client.Headers.formUrlEncodedContentType;
-
-    /// logging interceptor for [dio].
-    dio.interceptors.add(client.LogInterceptor(
-      logPrint: (object) {
-        if (object.isNull) return;
-        print(
-          '\x1B[92m[**AuthService**]=====> \x1B[0m $object',
-        );
-      },
-      requestHeader: true,
-      requestBody: true,
-      responseBody: true,
-      responseHeader: true,
-      error: true,
-    ));
   }
 
   /// [dio] is the [Dio] instance used to make all the requests.

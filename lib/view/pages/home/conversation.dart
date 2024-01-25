@@ -6,6 +6,7 @@ import 'package:chatx/data/models/message.dart';
 import 'package:chatx/data/models/user.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:rxdart/rxdart.dart';
 
 import 'package:socket_io_client/socket_io_client.dart' as io;
@@ -21,7 +22,7 @@ class _ConversationPageState extends State<ConversationPage> {
   io.Socket? socket;
 
   final streamOfMessages = BehaviorSubject<List<Message>>();
-  final messageController = TextEditingController();
+  final controller = TextEditingController();
 
   @override
   void initState() {
@@ -33,6 +34,8 @@ class _ConversationPageState extends State<ConversationPage> {
   }
 
   Future<void> initSocket() async {
+    final user = context.read<UserBloc>().state;
+    final id = user.id;
     socket = io.io(
       'http://192.168.1.4:3000',
       <String, dynamic>{
@@ -76,8 +79,7 @@ class _ConversationPageState extends State<ConversationPage> {
         'type': 'message',
         'receivers': <String>[
           ...widget.conversation.participants
-                  ?.where((element) =>
-                      element.id != context.read<UserBloc>().state.id)
+                  ?.where((element) => element.id != id)
                   .map((e) => '${e.id}')
                   .where((element) =>
                       element.isNotEmpty && element != 'null' && element != '')
@@ -85,7 +87,7 @@ class _ConversationPageState extends State<ConversationPage> {
                   .toList() ??
               <String>[],
         ],
-        'sender': context.read<UserBloc>().state.id,
+        'sender': id,
       },
     );
 
@@ -114,7 +116,7 @@ class _ConversationPageState extends State<ConversationPage> {
     socket?.clearListeners();
     socket?.close();
     socket?.dispose();
-    messageController.dispose();
+    controller.dispose();
   }
 
   @override
@@ -167,18 +169,20 @@ class _ConversationPageState extends State<ConversationPage> {
               stream: streamOfMessages.stream,
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
-                  final messages = snapshot.data;
+                  final messages = snapshot.data ?? <Message>[];
                   return ListView.builder(
-                    itemCount: messages?.length,
+                    itemCount: messages.length,
                     itemBuilder: (context, index) {
-                      final message = messages?[index];
-                      final me = message?.sender == user.id;
+                      final message = messages[index];
+                      final me = message.sender == user.id;
                       return Align(
                         alignment:
                             me ? Alignment.centerRight : Alignment.centerLeft,
-                        child: Builder(
-                          builder: (context) {
-                            return Container(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
                               constraints: BoxConstraints(
                                 maxWidth:
                                     MediaQuery.of(context).size.width * 0.6,
@@ -204,14 +208,42 @@ class _ConversationPageState extends State<ConversationPage> {
                                         bottomRight: Radius.circular(16),
                                       ),
                               ),
-                              child: Text(
-                                message?.message ?? '',
-                                style: const TextStyle(
-                                  color: Colors.white,
+                              child: RichText(
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: '${message.message ?? ''}\n',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onPrimary,
+                                          ),
+                                    ),
+                                    WidgetSpan(
+                                      child: Text(
+                                        DateFormat('hh:mm a - dd/MM/yyyy')
+                                            .format(
+                                          message.createdAt ?? DateTime.now(),
+                                        ),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall
+                                            ?.copyWith(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onPrimary,
+                                            ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            );
-                          },
+                            ),
+                          ],
                         ),
                       );
                     },
@@ -226,27 +258,30 @@ class _ConversationPageState extends State<ConversationPage> {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
-              controller: messageController,
+              controller: controller,
               decoration: InputDecoration(
-                hintText: 'Type a message',
-                suffixIcon: IconButton(
+                hintText: 'write a message',
+                suffixIcon: IconButton.filled(
                   onPressed: () {
-                    if (messageController.text.isEmpty) {
-                      return;
-                    }
-
+                    if (controller.text.isEmpty) return;
                     socket?.emit(
                       'conversation',
                       <String, dynamic>{
                         'conversation': widget.conversation.id,
                         'type': 'message',
-                        'message': messageController.text.trim(),
+                        'message': controller.text.trim(),
                         'sender': user.id,
                         'receivers': <String>[...receivers],
                       },
                     );
+                    setState(() {
+                      controller.clear();
+                    });
                   },
-                  icon: const Icon(Icons.send),
+                  icon: Icon(
+                    Icons.send,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
                 ),
               ),
             ),

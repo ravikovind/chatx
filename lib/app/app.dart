@@ -87,7 +87,6 @@ class Application extends StatelessWidget {
             ),
             darkTheme: ThemeData.dark().copyWith(
               colorScheme: darkColorScheme,
-              useMaterial3: true,
               textTheme: GoogleFonts.urbanistTextTheme(
                 Theme.of(context).textTheme,
               ),

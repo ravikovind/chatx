@@ -20,7 +20,7 @@ class SearchUserBloc extends Bloc<SearchUserEvent, SearchUserState> {
   FutureOr<void> _onSearchUser(
       SearchUser event, Emitter<SearchUserState> emit) async {
     emit(state.copyWith(isLoading: true, error: '', message: ''));
-    final response = await repository.searchUser(name: event.name);
+    final response = await repository.users(name: event.name);
     if (response.success) {
       final users = response.data as List<User>;
       emit(state.copyWith(

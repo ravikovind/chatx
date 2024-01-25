@@ -1,63 +1,62 @@
 import Conversation from "../models/conversation.js";
 
 export const createConversation = async (req, res) => {
-    let createdBy = req.user;
-    const { name, description, type, participants } = req.body;
-    console.log(req.body);
-    try {
-        const conversationOf = await Conversation.findOne({
-            participants: { $all: [...participants] },
-            type: type,
-        });
-        if (conversationOf) {
-            return res.status(200).json(conversationOf);
-        }
-
-        let obj = {};
-        if (name) obj.name = name;
-        if (description) obj.description = description;
-        if (type) obj.type = type === "group" ? "group" : "private";
-        if (participants) obj.participants = participants;
-        if (createdBy) obj.createdBy = createdBy;
-
-        const conversation = await Conversation.create(obj);
-        if (conversation) {
-            return res.status(200).json(conversation);
-        }
-        throw new Error('there was an error creating the conversation.');
-    } catch (error) {
-        return res.status(500).json({ message: error.message });
+  let createdBy = req.user;
+  const { name, description, type, participants } = req.body;
+  try {
+    const conversationOf = await Conversation.findOne({
+      participants: { $all: [...participants] },
+      type: type,
+    });
+    if (conversationOf) {
+      return res.status(200).json(conversationOf);
     }
-}
+
+    let result = {};
+    if (name) result.name = name;
+    if (description) result.description = description;
+    if (type) result.type = type === "group" ? "group" : "private";
+    if (participants) result.participants = participants;
+    if (createdBy) result.createdBy = createdBy;
+
+    const conversation = await Conversation.create(result);
+    if (conversation) {
+      return res.status(200).json(conversation);
+    }
+    throw new Error("there was an error creating the conversation.");
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
 
 export const conversations = async (req, res) => {
+  const id = req.user;
+  try {
+    let conversations = await Conversation.find({
+      participants: { $in: [id] },
+    }).populate("participants");
+    /// ignore the messages, createdBy
+    conversations = conversations.map((conversation) => {
+      return {
+        _id: conversation._id,
+        name: conversation.name,
+        description: conversation.description,
+        type: conversation.type,
+        participants: conversation.participants,
+        status: conversation.status,
+        createdAt: conversation.createdAt,
+        updatedAt: conversation.updatedAt,
+      };
+    });
 
-    const id = req.user;
-
-    try {
-        let conversations = await Conversation.find({ participants: { $in: [id] } }).populate("participants");
-        /// ignore the messages, createdBy
-        conversations = conversations.map((conversation) => {
-            return {
-                _id: conversation._id,
-                name: conversation.name,
-                description: conversation.description,
-                type: conversation.type,
-                participants: conversation.participants,
-                status: conversation.status,
-                createdAt: conversation.createdAt,
-                updatedAt: conversation.updatedAt,
-            };
-        });
-
-        if (conversations) {
-            return res.status(200).json(conversations);
-        }
-        throw new Error('there was an error fetching the conversations.');
-    } catch (error) {
-        return res.status(500).json({ message: error.message });
+    if (conversations) {
+      return res.status(200).json(conversations);
     }
-}
+    throw new Error("there was an error fetching the conversations.");
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
 
 // export const conversation = async (req, res) => {
 //     const { id } = req.params;
@@ -71,8 +70,6 @@ export const conversations = async (req, res) => {
 //         return res.status(500).json({ message: error.message });
 //     }
 // }
-
-
 
 // export const createMessage = async (req, res) => {
 //     let sender = req.user._id;

@@ -4,7 +4,7 @@ import 'package:response_x/response_x.dart';
 
 abstract class UserRepository {
   Future<Response> conversations();
-  Future<Response> searchUser({
+  Future<Response> users({
     required String name,
   });
   Future<Response> createConversation({
@@ -23,6 +23,5 @@ class UserRepositoryOf extends UserRepository {
       service.createConversation(conversation: conversation);
 
   @override
-  Future<Response> searchUser({required String name}) =>
-      service.searchUser(name: name);
+  Future<Response> users({required String name}) => service.users(name: name);
 }

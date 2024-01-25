@@ -29,9 +29,10 @@ class AppRouter {
             userBloc.state.name?.isNotEmpty == true &&
             userBloc.state.email != null &&
             userBloc.state.email?.isNotEmpty == true;
-        final authRoute = state.location.startsWith(kAuthRoute);
+        final authRoute = state.matchedLocation.startsWith(kAuthRoute);
         print(
-            '\x1B[39m[GoRouter] Redirecting to ${state.location} according to auth state: $authenticated location is auth route: $authRoute\x1B[0m');
+          '\x1B[39m[GoRouter] Redirecting to ${state.matchedLocation} according to auth state: $authenticated location is auth route: $authRoute\x1B[0m',
+        );
         if (!authRoute && !authenticated) {
           return kAuthRoute;
         } else if (authRoute && authenticated) {
@@ -58,40 +59,39 @@ class AppRouter {
             ),
           ],
         ),
-           GoRoute(
-              path: kHomeRoute,
-              name: kHomeRoute,
-              builder: (context, state) => const HomePage(),
-              routes: [
-                GoRoute(
-                  path: kUpdateRoute,
-                  name: kUpdateRoute,
-                  builder: (context, state) => Scaffold(
-                    appBar: AppBar(
-                      title: const Text('ChatX'),
-                    ),
-                  ),
+        GoRoute(
+          path: kHomeRoute,
+          name: kHomeRoute,
+          builder: (context, state) => const HomePage(),
+          routes: [
+            GoRoute(
+              path: kUpdateRoute,
+              name: kUpdateRoute,
+              builder: (context, state) => Scaffold(
+                appBar: AppBar(
+                  title: const Text('ChatX'),
                 ),
-                GoRoute(
-                  path: kProfileRoute,
-                  name: kProfileRoute,
-                  builder: (context, state) => const ProfilePage(),
-                ),
-                GoRoute(
-                  path: kSearchRoute,
-                  name: kSearchRoute,
-                  builder: (context, state) => const SearchPage(),
-                ),
-                GoRoute(
-                  path: kConversationRoute,
-                  name: kConversationRoute,
-                  builder: (context, state) => ConversationPage(
-                    conversation: state.extra as Conversation,
-                  ),
-                ),
-              ],
+              ),
             ),
-          
+            GoRoute(
+              path: kProfileRoute,
+              name: kProfileRoute,
+              builder: (context, state) => const ProfilePage(),
+            ),
+            GoRoute(
+              path: kSearchRoute,
+              name: kSearchRoute,
+              builder: (context, state) => const SearchPage(),
+            ),
+            GoRoute(
+              path: kConversationRoute,
+              name: kConversationRoute,
+              builder: (context, state) => ConversationPage(
+                conversation: state.extra as Conversation,
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }

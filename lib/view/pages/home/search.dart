@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:rxdart/rxdart.dart';
+
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
 
@@ -15,35 +17,42 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
+  final _stream = BehaviorSubject<String>();
+  void _onChange(String value) => _stream.add(value);
+  final focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _stream.debounceTime(const Duration(milliseconds: 800)).listen((event) {
+        if (event.length > 2 &&
+            !context.read<SearchUserBloc>().state.isLoading) {
+          context.read<SearchUserBloc>().add(SearchUser(name: event));
+        }
+      });
+      focusNode.requestFocus();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final user = context.read<UserBloc>().state;
+    final id = user.id;
     return Scaffold(
       appBar: AppBar(
         title: TextField(
           controller: _searchController,
-          onChanged: (value) {
-            if (value.length > 2 &&
-                !context.read<SearchUserBloc>().state.isLoading) {
-              context.read<SearchUserBloc>().add(SearchUser(name: value));
-            }
-          },
-          decoration: const InputDecoration(
+          focusNode: focusNode,
+          onChanged: _onChange,
+          decoration: const InputDecoration.collapsed(
             hintText: 'Search',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.all(
-                Radius.circular(16),
-              ),
-            ),
           ),
         ),
       ),
       body: BlocBuilder<SearchUserBloc, SearchUserState>(
         builder: (context, state) {
-          final users = state.users
-              .where(
-                (element) => element.id != context.read<UserBloc>().state.id,
-              )
-              .toList();
+          final users = state.users.where((user) => user.id != id).toList();
           if (state.isLoading) {
             return const Center(
               child: CircularProgressIndicator(),
@@ -54,9 +63,9 @@ class _SearchPageState extends State<SearchPage> {
             );
           }
           return ListView.builder(
-            itemCount: state.users.length,
+            itemCount: users.length,
             itemBuilder: (context, index) {
-              final user = state.users[index];
+              final user = users[index];
               return ListTile(
                 title: Text(user.name ?? ''),
                 subtitle: Text(user.email ?? ''),

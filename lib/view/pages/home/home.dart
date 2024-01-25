@@ -9,7 +9,6 @@ import 'package:random_avatar/random_avatar.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
-
   @override
   Widget build(BuildContext context) {
     final user = context.watch<UserBloc>().state;
@@ -17,20 +16,20 @@ class HomePage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('ChatX'),
         actions: [
-          /// profile
-          IconButton(
-            onPressed: () {
-              context.pushNamed(kProfileRoute);
-            },
-            icon: const Icon(Icons.person),
-          ),
-
           /// search
           IconButton(
             onPressed: () {
               context.pushNamed(kSearchRoute);
             },
             icon: const Icon(Icons.search),
+          ),
+
+          /// profile
+          IconButton(
+            onPressed: () {
+              context.pushNamed(kProfileRoute);
+            },
+            icon: const Icon(Icons.person),
           ),
         ],
       ),
@@ -65,7 +64,6 @@ class HomePage extends StatelessWidget {
             itemBuilder: (context, index) {
               final conversation = state.conversations[index];
               final participants = conversation.participants ?? <User>[];
-
               final otherThanMe = participants
                   .where((element) => element.id != user.id)
                   .toList();
@@ -74,12 +72,10 @@ class HomePage extends StatelessWidget {
                 return const SizedBox.shrink();
               } else if (otherThanMe.length == 1) {
                 return ListTile(
-                  onTap: () {
-                    context.pushNamed(
+                  onTap: () => context.pushNamed(
                       kConversationRoute,
                       extra: conversation,
-                    );
-                  },
+                    ),
                   title: Text(otherThanMe.first.name ?? 'No Name Found'),
                   subtitle: Text(
                     otherThanMe.first.email ?? 'No Email Found',
@@ -95,8 +91,7 @@ class HomePage extends StatelessWidget {
                 );
               }
               return ListTile(
-                onTap: () {},
-                title: Text(conversation.name ?? 'No Name Found'),
+                title: Text(conversation.name ?? 'N/A'),
               );
             },
           );
